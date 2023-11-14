@@ -45,6 +45,12 @@ public class InputHandler : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Coin"))
+            Destroy(other.gameObject);
+    }
+
     private void ExecuteCommand([CanBeNull] Command command)
     {
         if (command == null) return;
