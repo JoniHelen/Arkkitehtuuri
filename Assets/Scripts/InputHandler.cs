@@ -7,6 +7,7 @@ using UnityEngine;
 public class InputHandler : MonoBehaviour
 {
     [SerializeField] private TMP_Text m_Text;
+    [SerializeField] private Material Glow;
 
     private Command moveLeftCommand;
     private Command moveRightCommand;
@@ -35,10 +36,10 @@ public class InputHandler : MonoBehaviour
         moveForwardCommand = new MoveCommand(Vector3.forward);
         moveBackCommand = new MoveCommand(Vector3.back);
 
-        m_StandingState = new State("STANDING", () => !m_IsJumping && !m_IsCrouching);
+        m_StandingState = new State("STANDING", () => !m_IsJumping && !m_IsCrouching && !m_HasPowerup);
         m_JumpingState = new State("JUMPING", () => m_IsJumping && !m_IsCrouching);
         m_CrouchingState = new State("CROUCHING", () => m_IsCrouching && !m_IsJumping);
-        m_AbilityState = new State("ABILITY", () => m_HasPowerup);
+        m_AbilityState = new State("ABILITY", () => m_HasPowerup && !m_IsJumping && !m_IsCrouching);
 
         m_StandingState.AddTransitions(m_JumpingState, m_CrouchingState, m_AbilityState);
         m_JumpingState.AddTransitions(m_StandingState, m_CrouchingState, m_AbilityState);
@@ -116,6 +117,13 @@ public class InputHandler : MonoBehaviour
     {
         if (other.CompareTag("Coin") || other.CompareTag("Enemy"))
             Destroy(other.gameObject);
+
+        if (other.CompareTag("Powerup"))
+        {
+            Destroy(other.gameObject);
+            m_HasPowerup = true;
+            GetComponent<Renderer>().sharedMaterial = Glow;
+        }
     }
 
     private void ExecuteCommand([CanBeNull] Command command)
