@@ -47,7 +47,7 @@ public class InputHandler : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Coin"))
+        if (other.CompareTag("Coin") || other.CompareTag("Enemy"))
             Destroy(other.gameObject);
     }
 

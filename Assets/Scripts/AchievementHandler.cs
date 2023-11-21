@@ -6,39 +6,71 @@ using UnityEngine;
 public class AchievementHandler : MonoBehaviour
 {
     private uint CoinsCollected = 0;
+    private uint EnemiesKilled = 0;
 
     private Dictionary<AchievementID, Achievement> Achievements;
 
-    private enum AchievementID
+    private uint AchievementNotifFlags = 0;
+    
+    [Flags]
+    private enum AchievementID : uint
     {
-        CoinCollector
+        None = 0,
+        CoinCollector = 1 << 0,
+        Terminator = 1 << 1
     }
 
     void Start()
     {
+        InitializeAchievements();
+    }
+
+    private void OnEnable()
+    {
         Coin.OnCoinCollected += CoinCollectedHandler;
+        Enemy.OnEnemyKilled += EnemyKilledHandler;
+    }
+
+    private void OnDisable()
+    {
+        Coin.OnCoinCollected -= CoinCollectedHandler;
+        Enemy.OnEnemyKilled -= EnemyKilledHandler;
     }
 
     private void InitializeAchievements()
     {
-        Achievements = new Dictionary<AchievementID, Achievement>();
-        Achievements.Add(AchievementID.CoinCollector, new Achievement() { Condition = () => { return CoinsCollected == 5; } });
+        Achievements = new Dictionary<AchievementID, Achievement>
+        {
+            { AchievementID.CoinCollector, new Achievement { Condition = () => CoinsCollected == 5 } },
+            { AchievementID.Terminator, new Achievement { Condition = () => EnemiesKilled == 10 } }
+        };
+    }
+
+    private void EnemyKilledHandler()
+    {
+        EnemiesKilled++;
+        if (Achievements[AchievementID.Terminator].IsCompleted &&
+            (AchievementNotifFlags & (uint)AchievementID.Terminator) == 0)
+        {
+            Debug.Log("Terminator Unlocked!");
+            AchievementNotifFlags |= (uint)AchievementID.Terminator;
+        }
     }
 
     private void CoinCollectedHandler()
     {
         CoinsCollected++;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        if (Achievements[AchievementID.CoinCollector].IsCompleted &&
+            (AchievementNotifFlags & (uint)AchievementID.CoinCollector) == 0)
+        {
+            Debug.Log("Coin Collector Unlocked!");
+            AchievementNotifFlags |= (uint)AchievementID.CoinCollector;
+        }
     }
 }
 
 public struct Achievement
 {
     public Func<bool> Condition;
-    public bool IsCompleted;
+    public bool IsCompleted => Condition();
 }
